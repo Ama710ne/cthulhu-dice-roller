@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>新・クトゥルフ神話TRPG ダイスローラー v7.9.1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 20px;
+    }
+    .success  { color: #22c55e; text-shadow: 0 0 6px #22c55e; }
+    .failure  { color: #ef4444; text-shadow: 0 0 6px #ef4444; }
+    .critical { color: #3b82f6; font-weight: bold; text-shadow: 0 0 10px #60a5fa; }
+    .fumble   { color: #f97316; font-weight: bold; text-shadow: 0 0 8px #fb923c; }
+    .special  { color: #8b5cf6; font-weight: bold; text-shadow: 0 0 8px #a78bfa; }
+    .hard     { color: #facc15; font-weight: bold; text-shadow: 0 0 8px #fde047; }
+  </style>
+</head>
+<body>
+  <h1 class="text-2xl font-bold mb-4">新・クトゥルフ神話TRPG ダイスローラー v7.9.1</h1>
+
+  <!-- ロビー -->
+  <section id="lobby" class="mb-4 space-y-2">
+    <div>
+      <label>プレイヤー名：</label>
+      <input id="player-name" class="rounded bg-slate-800 px-3 py-2" placeholder="PL_名前">
+    </div>
+    <div>
+      <label>部屋ID：</label>
+      <input id="room-id" class="rounded bg-slate-800 px-3 py-2" placeholder="例: ABC123">
+    </div>
+    <div>
+      <label>KPパスワード（KPのみ）：</label>
+      <input id="kp-password" type="password" class="rounded bg-slate-800 px-3 py-2">
+    </div>
+    <div class="space-x-2">
+      <button id="create-room" class="bg-green-600 px-3 py-2 rounded">部屋を作成</button>
+      <button id="join-room" class="bg-blue-600 px-3 py-2 rounded">部屋に参加</button>
+    </div>
+    <div id="lobby-msg" class="text-sm text-slate-400"></div>
+  </section>
+
+  <!-- メイン画面 -->
+  <section id="main" class="hidden">
+    <div class="flex justify-between mb-4 items-center">
+      <div>
+        <strong>探索者：</strong>
+        <select id="char-select" class="bg-slate-800 px-2 py-1 rounded text-sm"></select>　
+        <strong>モード：</strong> <span id="mode-indicator">PL</span>　
+        <strong>部屋ID：</strong> <span id="room-display" class="text-yellow-400 font-mono">---</span>
+      </div>
+      <div class="space-x-2">
+        <input id="new-room-id" placeholder="新しい部屋ID" class="bg-slate-800 px-2 py-1 rounded text-sm w-32">
+        <button id="change-room-id" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-sm">ID変更</button>
+        <button id="delete-room" class="hidden bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-sm">削除</button>
+        <button id="exit-room" class="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded text-sm">退出</button>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label>探索者JSONを読み込む（複数可）：</label>
+      <input id="char-file" type="file" accept=".json" multiple class="bg-slate-800 px-3 py-2 rounded">
+    </div>
+
+    <div id="status-section" class="mb-4">
+      <h2 class="font-bold mb-1">ステータス</h2>
+      <div id="status-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2"></div>
+      <div class="text-red-400 font-semibold text-lg">HP：<span id="hp-display">--</span></div>
+      <div class="mt-2">
+        <input id="hp-input" type="number" class="w-24 bg-slate-800 px-2 py-1 rounded" placeholder="HPを変更">
+        <button id="update-hp" class="bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded">変更</button>
+      </div>
+    </div>
+
+    <div id="skills-section" class="mb-4">
+      <h2 class="font-bold mb-2">技能・能力一覧</h2>
+      <div id="skill-buttons" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 overflow-auto max-h-[60vh]"></div>
+    </div>
+
+    <div class="mb-4">
+      <label>修正値：</label>
+      <input id="modifier" type="number" value="0" class="w-24 bg-slate-800 px-2 py-1 rounded">
+      <label class="ml-4"><input id="private-roll" type="checkbox" class="mr-1">秘匿ダイス</label>
+    </div>
+
+    <div class="mb-6">
+      <button id="roll-btn" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded font-bold">自由ダイスを振る</button>
+      <input id="expr" placeholder="例：3d6+1d4-2" class="ml-2 bg-slate-800 px-3 py-2 rounded w-48">
+    </div>
+
+    <div id="inline-result" class="text-center mb-4">
+      <div id="inline-value" class="text-3xl font-extrabold">--</div>
+      <div id="inline-text" class="text-slate-300 text-lg">ここに結果が表示されます</div>
+    </div>
+
+    <div>
+      <h3 class="font-bold mb-2">履歴</h3>
+      <div id="history" class="space-y-1 max-h-[60vh] overflow-y-auto text-sm"></div>
+    </div>
+  </section>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+  // Firebase 初期化
+  const firebaseConfig = {
+    apiKey: "AIzaSyBrfXedwhmcCGYWrNaCJTN7xgTJUTqwwG0",
+    authDomain: "daisurora.firebaseapp.com",
+    databaseURL: "https://daisurora-default-rtdb.firebaseio.com",
+    projectId: "daisurora",
+    storageBucket: "daisurora.firebasestorage.app",
+    messagingSenderId: "998058550723",
+    appId: "1:998058550723:web:44b5fa8f1eba105f15c976"
+  }; 
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const playerName = document.getElementById("player-name");
+  const roomIdInput = document.getElementById("room-id");
+  const kpPassword = document.getElementById("kp-password");
+  const createBtn = document.getElementById("create-room");
+  const joinBtn = document.getElementById("join-room");
+  const deleteBtn = document.getElementById("delete-room");
+  const exitBtn = document.getElementById("exit-room");
+  const lobby = document.getElementById("lobby");
+  const main = document.getElementById("main");
+  const roomDisplay = document.getElementById("room-display");
+  const lobbyMsg = document.getElementById("lobby-msg");
+  const charFile = document.getElementById("char-file");
+  const charSelect = document.getElementById("char-select");
+  const statusGrid = document.getElementById("status-grid");
+  const skillButtons = document.getElementById("skill-buttons");
+  const inlineText = document.getElementById("inline-text");
+  const inlineValue = document.getElementById("inline-value");
+  const historyDiv = document.getElementById("history");
+  const modifierInput = document.getElementById("modifier");
+  const privateCheck = document.getElementById("private-roll");
+  const rollBtn = document.getElementById("roll-btn");
+  const exprInput = document.getElementById("expr");
+
+  let roomId = null;
+  let isKP = false;
+  let playerId = null;
+  let roomListener = null;
+  let knownPrivate = {};
+  let currentChars = {};
+  let currentChar = null;
+  let dynamicStatus = {};
+
+  // 🔧 修正版の変更点：
+  // - pushRoll で addHistory() を呼ぶのを削除
+  // - listenRoom で二重防止チェックを追加
+
+  async function sha256Hex(str){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function showStatus(msg){ lobbyMsg.textContent = msg; }
+
+  createBtn.onclick = async () => {
+    const pw = kpPassword.value.trim();
+    const name = playerName.value.trim() || "KP";
+    if (!pw) return showStatus("KPパスワードを入力してください");
+    const id = roomIdInput.value.trim().toUpperCase() || Math.random().toString(36).slice(2,8).toUpperCase();
+    const exists = await db.ref("rooms/"+id+"/meta").get();
+    if (exists.exists() && !exists.val().deleted) return showStatus("その部屋IDは使用中です。");
+    const hash = await sha256Hex(pw);
+    await db.ref("rooms/"+id+"/meta").set({kpName:name,passwordHash:hash,deleted:false});
+    roomId = id; isKP = true;
+    enterRoom();
+  };
+
+  joinBtn.onclick = async () => {
+    const id = roomIdInput.value.trim().toUpperCase();
+    if (!id) return showStatus("部屋IDを入力してください");
+    const snap = await db.ref("rooms/"+id+"/meta").get();
+    if (!snap.exists()) return showStatus("部屋が存在しません");
+    const meta = snap.val(); if (meta.deleted) return showStatus("削除済みの部屋です");
+    const input = kpPassword.value.trim();
+    if (input){ const hash = await sha256Hex(input); isKP = (hash === meta.passwordHash); }
+    roomId = id; enterRoom();
+  };
+
+  function enterRoom(){
+    lobby.classList.add("hidden");
+    main.classList.remove("hidden");
+    roomDisplay.textContent = roomId;
+    listenRoom();
+  }
+
+  exitBtn.onclick = ()=>exitRoom();
+  function exitRoom(){ 
+    if(roomListener) db.ref("rooms/"+roomId+"/rolls").off("child_added", roomListener);
+    lobby.classList.remove("hidden"); main.classList.add("hidden");
+  }
+
+  deleteBtn.onclick = async ()=>{
+    if(!isKP) return alert("KPのみ削除可能");
+    if(confirm("この部屋を削除しますか？")){
+      await db.ref("rooms/"+roomId).remove();
+      alert("部屋を削除しました");
+      exitRoom();
+    }
+  };
+
+  function listenRoom(){
+    roomListener = snap=>{
+      const d = snap.val();
+      if(document.querySelector(`[data-timestamp="${d.timestamp}"]`)) return; // 二重防止
+      const sameUser = (d.player === playerName.value.trim());
+      if(!d.hidden || isKP || knownPrivate[d.timestamp] || sameUser) addHistory(d);
+    };
+    db.ref("rooms/"+roomId+"/rolls").on("child_added", roomListener);
+  }
+
+  function addHistory(d){
+    const div=document.createElement("div");
+    div.dataset.timestamp=d.timestamp;
+    const time=new Date(d.timestamp).toLocaleTimeString();
+    const value=d.modified??d.total??d.raw??"";
+    div.innerHTML=`<span class="${d.cls||''}">${d.player||'匿名'}：${d.skill?d.skill+' → ':''}${d.status||d.expr}（${value}）<br><small>${time}</small></span>`;
+    historyDiv.prepend(div);
+  }
+
+  function pushRoll(d){
+    if(!roomId){ addHistory(d); return; }
+    db.ref("rooms/"+roomId+"/rolls").push(d);
+    if(d.hidden) knownPrivate[d.timestamp]=true;
+  }
+
+  function rollD(n){ return Math.floor(Math.random()*n)+1; }
+
+  function parseDice(expr){
+    const parts = expr.match(/([+-]?\d*d\d+|[+-]?\d+)/g);
+    if(!parts) return {total:NaN, rolls:[]};
+    let total=0; const rolls=[];
+    for(let part of parts){
+      let sign=1;
+      if(part.startsWith('-')){ sign=-1; part=part.slice(1); }
+      if(part.startsWith('+')) part=part.slice(1);
+      if(part.includes('d')){
+        const [a,b]=part.split('d').map(x=>parseInt(x)||0);
+        for(let i=0;i<(a||1);i++){ const r=rollD(b); rolls.push(r*sign); total+=r*sign; }
+      } else total+=sign*(parseInt(part)||0);
+    }
+    return {total, rolls};
+  }
+
+  function calcResult(raw, skillVal){
+    const special = Math.ceil(skillVal / 5);
+    const hard = Math.ceil(skillVal / 2);
+    if(raw <= 5) return {status:"クリティカル！", cls:"critical"};
+    if((raw>=96 && skillVal<100) || raw===100) return {status:"ファンブル", cls:"fumble"};
+    if(raw <= special) return {status:"スペシャル成功", cls:"special"};
+    if(raw <= hard) return {status:"ハード成功", cls:"hard"};
+    if(raw <= skillVal) return {status:"成功", cls:"success"};
+    return {status:"失敗", cls:"failure"};
+  }
+
+  rollBtn.onclick=()=>{
+    const expr=exprInput.value.trim()||"1d100";
+    const parsed=parseDice(expr);
+    inlineValue.textContent=parsed.total;
+    inlineText.textContent=`${expr} → [${parsed.rolls.join(', ')}] = ${parsed.total}`;
+    pushRoll({player:playerName.value.trim()||"匿名",expr,rolls:parsed.rolls,total:parsed.total,hidden:!!privateCheck.checked,timestamp:Date.now()});
+  };
+
+  showStatus("準備完了。部屋を作成または参加してください。");
+  </script>
+</body>
+</html>
