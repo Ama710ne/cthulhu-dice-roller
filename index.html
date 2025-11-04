@@ -1,586 +1,297 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>新・クトゥルフ神話TRPG ダイスローラー v7.7</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>新・クトゥルフ神話TRPG ダイスローラー v7.7.5</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body{background:#0f172a;color:#e2e8f0;font-family:system-ui;padding:18px}
-  .success{color:#22c55e;text-shadow:0 0 6px #22c55e}
-  .failure{color:#ef4444;text-shadow:0 0 6px #ef4444}
-  .critical{color:#3b82f6;font-weight:700;text-shadow:0 0 10px #60a5fa}
-  .fumble{color:#f97316;font-weight:700;text-shadow:0 0 8px #fb923c}
-  .special{color:#8b5cf6;font-weight:700;text-shadow:0 0 8px #a78bfa}
-  .hard{color:#facc15;font-weight:700;text-shadow:0 0 8px #fde047}
-  #inline-value{font-size:3rem;font-weight:900}
-  #inline-text{font-size:1rem;color:#94a3b8}
-  #memo-toggle{position:fixed;top:14px;right:14px;z-index:1200;display:none;background:#111827;padding:8px;border-radius:8px;cursor:pointer}
-  .memo-overlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;z-index:1100}
-  .memo-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6)}
-  .memo-panel{position:relative;margin-top:6vh;width:calc(100% - 40px);max-width:900px;background:#071026;border-radius:8px;padding:12px;transform:translateY(-140%);transition:transform .28s}
-  .memo-overlay.show .memo-panel{transform:translateY(0)}
-  .memo-textarea{width:100%;min-height:48vh;background:#071026;color:#e2e8f0;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:6px;resize:vertical}
-  .btn {padding:6px 10px;border-radius:6px}
-  /* 下部バナー（部屋削除通知） */
-  #delete-banner{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#b91c1c;color:white;padding:10px 18px;border-radius:8px;display:none;z-index:1300;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 20px;
+}
+.success  { color: #22c55e; text-shadow: 0 0 6px #22c55e; }
+.failure  { color: #ef4444; text-shadow: 0 0 6px #ef4444; }
+.critical { color: #3b82f6; font-weight: bold; text-shadow: 0 0 10px #60a5fa; }
+.fumble   { color: #f97316; font-weight: bold; text-shadow: 0 0 8px #fb923c; }
+.special  { color: #8b5cf6; font-weight: bold; text-shadow: 0 0 8px #a78bfa; }
+.hard     { color: #facc15; font-weight: bold; text-shadow: 0 0 8px #fde047; }
 </style>
 </head>
 <body>
-  <h1 class="text-2xl font-bold mb-4">新・クトゥルフ神話TRPG ダイスローラー v7.7</h1>
+<h1 class="text-2xl font-bold mb-4">新・クトゥルフ神話TRPG ダイスローラー v7.7R</h1>
 
-  <!-- ロビー -->
-  <section id="lobby" class="mb-4 space-y-3">
-    <div><label>プレイヤー名：</label><input id="player-name" class="rounded bg-slate-800 px-3 py-2" placeholder="PL_名前"></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <div><label>部屋ID：</label><input id="room-id" class="rounded bg-slate-800 px-3 py-2" placeholder="例: ABC123"></div>
-      <div><label style="opacity:.8">（KP: 任意で指定、空なら自動）</label></div>
-    </div>
-    <div><label>KPパスワード：</label><input id="kp-password" type="password" class="rounded bg-slate-800 px-3 py-2"></div>
-    <div class="space-x-2">
-      <button id="create-room" class="bg-green-600 btn">部屋を作成</button>
-      <button id="join-room" class="bg-blue-600 btn">部屋に参加</button>
-    </div>
-    <div id="lobby-msg" class="text-sm text-slate-400"></div>
-  </section>
+<!-- ロビー -->
+<section id="lobby" class="mb-4 space-y-2">
+  <div>
+    <label>プレイヤー名：</label>
+    <input id="player-name" class="rounded bg-slate-800 px-3 py-2" placeholder="PL_名前">
+  </div>
+  <div>
+    <label>部屋ID：</label>
+    <input id="room-id" class="rounded bg-slate-800 px-3 py-2" placeholder="例: ABC123">
+  </div>
+  <div>
+    <label>KPパスワード（KPのみ）：</label>
+    <input id="kp-password" type="password" class="rounded bg-slate-800 px-3 py-2">
+  </div>
+  <div class="space-x-2">
+    <button id="create-room" class="bg-green-600 px-3 py-2 rounded">部屋を作成</button>
+    <button id="join-room" class="bg-blue-600 px-3 py-2 rounded">部屋に参加</button>
+  </div>
+  <div id="lobby-msg" class="text-sm text-slate-400 mt-1">部屋を作成または参加してください。</div>
+</section>
 
-  <!-- メイン -->
-  <section id="main" class="hidden">
-    <div class="flex justify-between items-center mb-4">
-      <div>
-        <strong>探索者：</strong>
-        <select id="char-select" class="bg-slate-800 px-2 py-1 rounded text-sm"></select>
-        <strong class="ml-3">モード：</strong><span id="mode-indicator">PL</span>
-        <strong class="ml-3">部屋ID：</strong><span id="room-display" class="text-yellow-400 font-mono">---</span>
-      </div>
-      <div class="space-x-2">
-        <input id="change-room-input" placeholder="新ID" class="hidden bg-slate-800 px-2 py-1 rounded text-sm w-28">
-        <button id="change-room-btn" class="hidden bg-indigo-600 btn text-sm">ID変更</button>
-        <button id="delete-room" class="hidden bg-red-700 btn text-sm">部屋削除</button>
-        <button id="exit-room" class="bg-gray-700 btn text-sm">退出</button>
-      </div>
-    </div>
-
-    <div class="mb-3">
-      <label>探索者JSON（複数可）：</label>
-      <input id="char-file" type="file" accept=".json" multiple class="bg-slate-800 px-3 py-2 rounded">
-    </div>
-
-    <div id="status-section" class="mb-4">
-      <h2 class="font-bold mb-1">ステータス（編集可）</h2>
-      <div id="status-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2"></div>
-      <div class="text-red-400 font-semibold text-lg">HP：<span id="hp-display">--</span></div>
-      <div class="mt-2">
-        <input id="hp-input" type="number" class="w-24 bg-slate-800 px-2 py-1 rounded" placeholder="HPを変更">
-        <button id="update-hp" class="bg-blue-500 btn">変更</button>
-      </div>
-    </div>
-
-    <div id="skills-section" class="mb-4">
-      <h2 class="font-bold mb-2">技能・能力一覧</h2>
-      <div id="skill-buttons" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 overflow-auto max-h-[36vh]"></div>
-    </div>
-
-    <div class="mb-4">
-      <label>修正値：</label>
-      <input id="modifier" type="number" value="0" class="w-24 bg-slate-800 px-2 py-1 rounded">
-      <label class="ml-4"><input id="private-roll" type="checkbox" class="mr-1">秘匿ダイス</label>
-    </div>
-
-    <div class="mb-6">
-      <button id="roll-btn" class="bg-yellow-500 btn font-bold">自由ダイスを振る</button>
-      <input id="expr" placeholder="例：3d6+1d4-2" class="ml-2 bg-slate-800 px-3 py-2 rounded w-48">
-    </div>
-
-    <div id="inline-result" class="text-center mb-4">
-      <div id="inline-value">--</div>
-      <div id="inline-text">ここに結果が表示されます</div>
-    </div>
-
+<!-- メイン画面 -->
+<section id="main" class="hidden">
+  <div class="flex justify-between mb-4 items-center">
     <div>
-      <h3 class="font-bold mb-2">履歴</h3>
-      <div id="history" class="space-y-1 max-h-[40vh] overflow-y-auto text-sm"></div>
+      <strong>モード：</strong> <span id="mode-indicator">PL</span>　
+      <strong>部屋ID：</strong> <span id="room-display" class="text-yellow-400 font-mono">---</span>
     </div>
-  </section>
-
-  <button id="memo-toggle">📝 メモ</button>
-  <div id="memo-overlay" class="memo-overlay">
-    <div class="memo-backdrop" id="memo-backdrop"></div>
-    <div class="memo-panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;">
-        <strong>メモ（個人用）</strong>
-        <div><button id="memo-close" class="bg-slate-700 btn">✖</button></div>
-      </div>
-      <textarea id="memo-text" class="memo-textarea" placeholder="ここにメモを保存します（自動保存されます）"></textarea>
+    <div class="space-x-2">
+      <button id="delete-room" class="hidden bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-sm">部屋削除</button>
+      <button id="exit-room" class="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded text-sm">退出</button>
     </div>
   </div>
 
-  <div id="delete-banner">⚠️ KPがこの部屋を削除しました</div>
+  <div class="mb-3">
+    <label>探索者JSONを読み込む：</label>
+    <input id="char-file" type="file" accept=".json" multiple class="bg-slate-800 px-3 py-2 rounded">
+  </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <div id="status-section" class="mb-4">
+    <h2 class="font-bold mb-1">ステータス</h2>
+    <div id="status-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2"></div>
+  </div>
 
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // --- Firebase 設定（そのまま） ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyBrfXedwhmcCGYWrNaCJTN7xgTJUTqwwG0",
-      authDomain: "daisurora.firebaseapp.com",
-      databaseURL: "https://daisurora-default-rtdb.firebaseio.com",
-      projectId: "daisurora",
-      storageBucket: "daisurora.firebasestorage.app",
-      messagingSenderId: "998058550723",
-      appId: "1:998058550723:web:44b5fa8f1eba105f15c976"
-    };
-    try{ firebase.initializeApp(firebaseConfig); } catch(e){}
-    const db = firebase.database();
+  <div id="skills-section" class="mb-4">
+    <h2 class="font-bold mb-2">技能一覧</h2>
+    <div id="skill-buttons" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 overflow-auto max-h-[60vh]"></div>
+  </div>
 
-    // DOM
-    const createBtn = document.getElementById("create-room");
-    const joinBtn = document.getElementById("join-room");
-    const deleteRoomBtn = document.getElementById("delete-room");
-    const exitBtn = document.getElementById("exit-room");
-    const changeRoomInput = document.getElementById("change-room-input");
-    const changeRoomBtn = document.getElementById("change-room-btn");
-    const playerName = document.getElementById("player-name");
-    const kpPassword = document.getElementById("kp-password");
-    const roomIdInput = document.getElementById("room-id");
-    const lobby = document.getElementById("lobby");
-    const main = document.getElementById("main");
-    const lobbyMsg = document.getElementById("lobby-msg");
-    const modeIndicator = document.getElementById("mode-indicator");
-    const roomDisplay = document.getElementById("room-display");
-    const charFile = document.getElementById("char-file");
-    const charSelect = document.getElementById("char-select");
-    const statusGrid = document.getElementById("status-grid");
-    const skillButtons = document.getElementById("skill-buttons");
-    const hpDisplay = document.getElementById("hp-display");
-    const hpInput = document.getElementById("hp-input");
-    const updateHpBtn = document.getElementById("update-hp");
-    const modifierInput = document.getElementById("modifier");
-    const privateCheck = document.getElementById("private-roll");
-    const rollBtn = document.getElementById("roll-btn");
-    const exprInput = document.getElementById("expr");
-    const inlineValue = document.getElementById("inline-value");
-    const inlineText = document.getElementById("inline-text");
-    const historyDiv = document.getElementById("history");
-    const memoToggle = document.getElementById("memo-toggle");
-    const memoOverlay = document.getElementById("memo-overlay");
-    const memoClose = document.getElementById("memo-close");
-    const memoBackdrop = document.getElementById("memo-backdrop");
-    const memoText = document.getElementById("memo-text");
-    const deleteBanner = document.getElementById("delete-banner");
+  <div class="mb-4">
+    <label>修正値：</label>
+    <input id="modifier" type="number" value="0" class="w-24 bg-slate-800 px-2 py-1 rounded">
+    <label class="ml-4"><input id="private-roll" type="checkbox" class="mr-1">秘匿ダイス</label>
+  </div>
 
-    // state
-    let roomId = null;
-    let isKP = false;
-    let listener = null;
-    let deleteWatcher = null;
-    let currentChars = {}; // name -> object
-    let currentCharName = null;
-    const playerId = "id_" + Math.random().toString(36).slice(2,10);
+  <div class="mb-6">
+    <button id="roll-btn" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded font-bold">自由ダイスを振る</button>
+    <input id="expr" placeholder="例：3d6+1d4-2" class="ml-2 bg-slate-800 px-3 py-2 rounded w-48">
+  </div>
 
-    // helpers
-    function showStatus(msg){ lobbyMsg.textContent = msg; }
-    async function sha256Hex(str){
-      if(window.crypto && crypto.subtle){
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-        return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-      } else {
-        let h=0; for(let i=0;i<str.length;i++) h=(Math.imul(31,h)+str.charCodeAt(i))|0;
-        return (h>>>0).toString(16);
-      }
+  <div id="inline-result" class="text-center mb-4">
+    <div id="inline-value" class="text-3xl font-extrabold">--</div>
+    <div id="inline-text" class="text-slate-300 text-lg">ここに結果が表示されます</div>
+  </div>
+
+  <div>
+    <h3 class="font-bold mb-2">履歴</h3>
+    <div id="history" class="space-y-1 max-h-[60vh] overflow-y-auto text-sm"></div>
+  </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBrfXedwhmcCGYWrNaCJTN7xgTJUTqwwG0",
+  authDomain: "daisurora.firebaseapp.com",
+  databaseURL: "https://daisurora-default-rtdb.firebaseio.com",
+  projectId: "daisurora",
+  storageBucket: "daisurora.firebasestorage.app",
+  messagingSenderId: "998058550723",
+  appId: "1:998058550723:web:44b5fa8f1eba105f15c976",
+  measurementId: "G-EKF2JENYMK"
+}; 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const lobby = document.getElementById("lobby");
+const main = document.getElementById("main");
+const lobbyMsg = document.getElementById("lobby-msg");
+const createBtn = document.getElementById("create-room");
+const joinBtn = document.getElementById("join-room");
+const deleteBtn = document.getElementById("delete-room");
+const exitBtn = document.getElementById("exit-room");
+const playerName = document.getElementById("player-name");
+const kpPassword = document.getElementById("kp-password");
+const roomIdInput = document.getElementById("room-id");
+const roomDisplay = document.getElementById("room-display");
+const charFile = document.getElementById("char-file");
+const charSelect = document.getElementById("char-select");
+const statusGrid = document.getElementById("status-grid");
+const skillButtons = document.getElementById("skill-buttons");
+const modifierInput = document.getElementById("modifier");
+const privateCheck = document.getElementById("private-roll");
+const rollBtn = document.getElementById("roll-btn");
+const exprInput = document.getElementById("expr");
+const inlineText = document.getElementById("inline-text");
+const inlineValue = document.getElementById("inline-value");
+const historyDiv = document.getElementById("history");
+
+let roomId=null,isKP=false,roomListener=null,deleteListener=null;
+let knownPrivate={},playerId="id_"+Math.random().toString(36).slice(2,10);
+let currentChar=null,dynamicStatus={};
+
+function showStatus(msg){ lobbyMsg.textContent=msg; }
+
+async function sha256Hex(str){
+  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ================== 部屋作成 ==================
+createBtn.onclick = async () => {
+  showStatus("⏳ 部屋を作成しています…");
+  const pw=kpPassword.value.trim(), name=playerName.value.trim()||"KP";
+  if(!pw) return showStatus("KPパスワードを入力してください");
+  const id=roomIdInput.value.trim().toUpperCase()||Math.random().toString(36).slice(2,8).toUpperCase();
+  const exists=await db.ref("rooms/"+id+"/meta").get();
+  if(exists.exists() && !exists.val().deleted)
+    return showStatus("⚠️ その部屋IDはすでに使用中です。別のIDを指定してください。");
+  const hash=await sha256Hex(pw);
+  await db.ref("rooms/"+id+"/meta").set({kpName:name,passwordHash:hash,createdAt:Date.now(),deleted:false});
+  showStatus("✅ 部屋を作成しました！入室中…");
+  setTimeout(()=>enterRoom(id,true),600);
+};
+
+// ================== 部屋参加 ==================
+joinBtn.onclick = async ()=>{
+  showStatus("🔄 部屋に参加しています…");
+  const id=roomIdInput.value.trim().toUpperCase();
+  if(!id) return showStatus("部屋IDを入力してください");
+  const snap=await db.ref("rooms/"+id+"/meta").get();
+  if(!snap.exists()) return showStatus("部屋が存在しません");
+  const meta=snap.val();
+  if(meta.deleted) return showStatus("この部屋は削除済みです");
+  const input=kpPassword.value.trim();
+  if(input){
+    const hash=await sha256Hex(input);
+    isKP=(hash===meta.passwordHash);
+  }
+  showStatus("✅ 入室しました！");
+  setTimeout(()=>enterRoom(id,false),600);
+};
+
+function enterRoom(id,kp){
+  roomId=id;isKP=kp;
+  lobby.classList.add("hidden");
+  main.classList.remove("hidden");
+  roomDisplay.textContent=roomId;
+  if(isKP) deleteBtn.classList.remove("hidden");
+  listenRoom();
+  watchDeletion();
+}
+
+// ================== 部屋削除 ==================
+deleteBtn.onclick = async ()=>{
+  if(!isKP) return;
+  if(!confirm("この部屋を削除しますか？")) return;
+  await db.ref("rooms/"+roomId+"/meta/deleted").set(true);
+  await db.ref("rooms/"+roomId).remove();
+  alert("部屋を削除しました。");
+  location.reload();
+};
+
+// ================== 削除検知 ==================
+function watchDeletion(){
+  deleteListener=snap=>{
+    if(snap.exists()&&snap.val()===true){
+      alert("KPが部屋を削除しました。");
+      location.reload();
     }
+  };
+  db.ref("rooms/"+roomId+"/meta/deleted").on("value",deleteListener);
+}
 
-    // ---- room create ----
-    createBtn.onclick = async () => {
-      const pw = kpPassword.value.trim();
-      if(!pw) return showStatus("KPパスワードを入力してください");
-      const name = playerName.value.trim() || "KP";
-      const idCand = (roomIdInput.value.trim() || Math.random().toString(36).slice(2,8)).toUpperCase();
-      try {
-        const snap = await db.ref("rooms/"+idCand+"/meta").get();
-        if(snap.exists() && !snap.val().deleted) {
-          return showStatus("その部屋IDはすでに使用中です。別のIDを指定してください。");
-        }
-        const hash = await sha256Hex(pw);
-        await db.ref("rooms/"+idCand+"/meta").set({kpName:name,passwordHash:hash,createdAt:Date.now(),deleted:false});
-        roomId = idCand; isKP = true;
-        enterRoom();
-        pushSystem(`${playerName.value.trim()||"匿名"} が参加しました。`);
-      } catch(e){
-        console.error(e); showStatus("部屋作成に失敗しました");
-      }
-    };
+// ================== JSON読み込み ==================
+charFile.onchange = e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const ch=JSON.parse(ev.target.result);
+      loadCharacter(ch);
+    }catch{alert("JSONエラー");}
+  };
+  reader.readAsText(file);
+};
 
-    // ---- room join ----
-    joinBtn.onclick = async () => {
-      const id = (roomIdInput.value.trim()||"").toUpperCase();
-      if(!id) return showStatus("部屋IDを入力してください");
-      try {
-        const snap = await db.ref("rooms/"+id+"/meta").get();
-        if(!snap.exists()) return showStatus("部屋が存在しません");
-        if(snap.val().deleted) return showStatus("この部屋は削除済みです");
-        const input = kpPassword.value.trim();
-        if(input){
-          const hash = await sha256Hex(input);
-          isKP = (hash === snap.val().passwordHash);
-        } else isKP = false;
-        roomId = id;
-        enterRoom();
-        pushSystem(`${playerName.value.trim()||"匿名"} が参加しました。`);
-      } catch(e){
-        console.error(e); showStatus("参加に失敗しました");
-      }
-    };
+// ================== 探索者反映 ==================
+function loadCharacter(ch){
+  const attributes=ch.ステータス||{};
+  const skills=ch.技能||{};
+  statusGrid.innerHTML="";skillButtons.innerHTML="";
+  for(const [k,v] of Object.entries(attributes)){
+    const wrap=document.createElement("div");
+    wrap.className="flex items-center space-x-2";
+    const label=document.createElement("span");
+    label.textContent=`${k}：`;
+    const input=document.createElement("input");
+    input.type="number";input.value=v;
+    input.className="w-20 bg-slate-800 rounded px-2 py-1 text-sm";
+    input.oninput=()=>dynamicStatus[k]=parseInt(input.value)||0;
+    const btn=document.createElement("button");
+    btn.textContent="振る";
+    btn.className="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-sm";
+    btn.onclick=()=>rollSkill(k,parseInt(input.value)||0);
+    wrap.append(label,input,btn);
+    statusGrid.appendChild(wrap);
+  }
+  for(const [name,val] of Object.entries(skills)){
+    const btn=document.createElement("button");
+    btn.textContent=`${name} (${val})`;
+    btn.className="bg-slate-700 hover:bg-slate-600 rounded px-2 py-1 text-sm";
+    btn.onclick=()=>rollSkill(name,parseInt(val)||0);
+    skillButtons.appendChild(btn);
+  }
+}
 
-    // ---- enter room common ----
-    function enterRoom(){
-      lobby.classList.add("hidden");
-      main.classList.remove("hidden");
-      roomDisplay.textContent = roomId || '---';
-      modeIndicator.textContent = isKP ? "KP" : "PL";
-      memoToggle.style.display = "block";
-      // KP-only controls
-      if(isKP){
-        deleteRoomBtn.classList.remove("hidden");
-        changeRoomInput.classList.remove("hidden");
-        changeRoomBtn.classList.remove("hidden");
-      } else {
-        deleteRoomBtn.classList.add("hidden");
-        changeRoomInput.classList.add("hidden");
-        changeRoomBtn.classList.add("hidden");
-      }
-      loadMemo();
-      watchDeletion();   // watch deleted flag
-      listenRoom();      // listen rolls
-      showStatus("部屋に入りました: " + roomId);
-    }
+// ================== 判定ロジック ==================
+function rollD(n){return Math.floor(Math.random()*n)+1;}
+function calcResult(raw,skill){
+  const sp=Math.ceil(skill/5), hd=Math.ceil(skill/2);
+  if(raw<=5)return{t:"クリティカル！",c:"critical"};
+  if((raw>=96&&skill<100)||raw===100)return{t:"ファンブル",c:"fumble"};
+  if(raw===sp)return{t:"スペシャル成功",c:"special"};
+  if(raw===hd)return{t:"ハード成功",c:"hard"};
+  if(raw<=skill)return{t:"成功",c:"success"};
+  return{t:"失敗",c:"failure"};
+}
+function rollSkill(name,val){
+  const raw=rollD(100);
+  const res=calcResult(raw,val);
+  inlineValue.textContent=raw;
+  inlineText.textContent=`${name}(${val}) → ${res.t}`;
+  inlineText.className=res.c;
+  pushRoll({player:playerName.value||"匿名",skill:name,val,raw,status:res.t,cls:res.c,hidden:privateCheck.checked,timestamp:Date.now()});
+}
 
-    // ---- exit room ----
-    exitBtn.onclick = () => {
-      pushSystem(`${playerName.value.trim()||"匿名"} が退出しました。`);
-      exitRoom();
-    };
-    function exitRoom(){
-      if(listener && roomId) db.ref("rooms/"+roomId+"/rolls").off("child_added", listener);
-      if(deleteWatcher && roomId) db.ref("rooms/"+roomId+"/meta/deleted").off("value", deleteWatcher);
-      listener = null; deleteWatcher = null;
-      roomId = null; isKP = false;
-      main.classList.add("hidden");
-      lobby.classList.remove("hidden");
-      memoToggle.style.display = "none";
-      showStatus("退出しました");
-    }
-
-    // ---- delete room (KP only) ----
-    deleteRoomBtn.onclick = async () => {
-      if(!isKP || !roomId) return alert("KPのみが削除できます。");
-      if(!confirm("この部屋を完全に削除しますか？（全員がロビーに戻ります）")) return;
-      try {
-        // set deleted flag first so clients can show banner
-        await db.ref("rooms/"+roomId+"/meta/deleted").set(true);
-        // small delay to allow watchers to see flag, then remove node
-        setTimeout(async ()=>{
-          try{ await db.ref("rooms/"+roomId).remove(); }catch(e){console.error("remove failed",e);}
-        }, 300);
-        // local exit
-        exitRoom();
-      } catch(e){
-        console.error(e); alert("削除に失敗しました");
-      }
-    };
-
-    // ---- watch deletion to show banner on PL side ----
-    function watchDeletion(){
-      if(!roomId) return;
-      deleteWatcher = snap => {
-        if(snap.exists() && snap.val() === true){
-          // show bottom-center red banner for 5s
-          deleteBanner.style.display = "block";
-          setTimeout(()=>{ deleteBanner.style.display = "none"; }, 5000);
-          // force back to lobby after short delay
-          setTimeout(()=>{ exitRoom(); showStatus("KPが部屋を削除しました"); }, 600);
-        }
-      };
-      db.ref("rooms/"+roomId+"/meta/deleted").on("value", deleteWatcher);
-    }
-
-    // ---- change room id (KP) ----
-    changeRoomBtn.onclick = async () => {
-      if(!isKP || !roomId) return alert("KPのみ変更できます");
-      const newId = (changeRoomInput.value || "").trim().toUpperCase();
-      if(!newId) return alert("新しい部屋IDを入力してください");
-      if(newId === roomId) return alert("同じIDです");
-      try {
-        const exist = await db.ref("rooms/"+newId+"/meta").get();
-        if(exist.exists() && !exist.val().deleted) return alert("そのIDは既に使われています");
-        // copy entire room node and remove old
-        const roomDataSnap = await db.ref("rooms/"+roomId).get();
-        if(!roomDataSnap.exists()) return alert("元の部屋データが見つかりません");
-        const roomData = roomDataSnap.val();
-        await db.ref("rooms/"+newId).set(roomData);
-        await db.ref("rooms/"+roomId).remove();
-        roomId = newId;
-        roomDisplay.textContent = roomId;
-        showStatus("部屋IDを変更しました: " + roomId);
-        // reattach listeners
-        if(listener) db.ref("rooms/"+roomId+"/rolls").off("child_added", listener);
-        if(deleteWatcher) db.ref("rooms/"+roomId+"/meta/deleted").off("value", deleteWatcher);
-        listenRoom();
-        watchDeletion();
-      } catch(e){
-        console.error(e); alert("部屋ID変更に失敗しました");
-      }
-    };
-
-    // ---- push system message to history + (if in room) to DB ----
-    function pushSystem(text){
-      const payload = { system:true, text, timestamp: Date.now() };
-      addHistory(payload);
-      if(roomId) db.ref("rooms/"+roomId+"/rolls").push(payload);
-    }
-
-    // ---- Character JSON handling (multiple) ----
-    charFile.onchange = e => {
-      const files = Array.from(e.target.files || []);
-      for(const f of files){
-        const r = new FileReader();
-        r.onload = ev => {
-          try {
-            const data = JSON.parse(ev.target.result);
-            addCharacter(data);
-          } catch(err){
-            alert("JSON読み込み失敗: " + f.name);
-          }
-        };
-        r.readAsText(f);
-      }
-      e.target.value = "";
-    };
-
-    function addCharacter(ch){
-      const name = ch.キャラクター名 || ch.name || ("探索者" + (Object.keys(currentChars).length+1));
-      currentChars[name] = ch;
-      refreshCharSelect(name);
-    }
-
-    function refreshCharSelect(selectName){
-      charSelect.innerHTML = "";
-      Object.keys(currentChars).forEach(n=>{
-        const opt = document.createElement("option"); opt.value = n; opt.textContent = n;
-        charSelect.appendChild(opt);
-      });
-      if(selectName) currentCharName = selectName;
-      else if(!currentCharName) currentCharName = Object.keys(currentChars)[0] || null;
-      if(currentCharName) charSelect.value = currentCharName;
-      renderCharacter(currentCharName);
-    }
-
-    charSelect.onchange = ()=>{ currentCharName = charSelect.value; renderCharacter(currentCharName); };
-
-    // --- render character (attributes editable, skills buttons) ---
-    function renderCharacter(name){
-      statusGrid.innerHTML = ""; skillButtons.innerHTML = ""; hpDisplay.textContent="--";
-      if(!name || !currentChars[name]) return;
-      const ch = currentChars[name];
-      // support various keys
-      const attributes = ch.ステータス || ch.attributes || ch.status || {};
-      const skills = ch.技能 || ch.skills || ch.skill || {};
-      // normalize: if skills contains 幸運 => move to attributes; アイデア/知識 prefer skills
-      if(skills["幸運"] && !attributes["幸運"]){ attributes["幸運"] = skills["幸運"]; delete skills["幸運"]; }
-      if(attributes["アイデア"] && !skills["アイデア"]){ skills["アイデア"] = attributes["アイデア"]; delete attributes["アイデア"]; }
-      if(attributes["知識"] && !skills["知識"]){ skills["知識"] = attributes["知識"]; delete attributes["知識"]; }
-
-      // attributes area: editable + roll button
-      Object.entries(attributes).forEach(([k,v])=>{
-        const wrap = document.createElement("div"); wrap.className="flex items-center space-x-2";
-        const label = document.createElement("span"); label.textContent = `${k}：`;
-        const input = document.createElement("input"); input.type="number"; input.value = (v===undefined||v===null)?"":v;
-        input.className="w-20 bg-slate-800 rounded px-2 py-1 text-sm";
-        input.oninput = ()=> { attributes[k] = parseInt(input.value,10) || 0; updateAutoHp(attributes); };
-        const btn = document.createElement("button"); btn.textContent="振る"; btn.className="bg-slate-700 px-2 py-1 rounded text-sm";
-        btn.onclick = ()=> { const useVal = parseInt(input.value,10) || 0; rollSkill(k, useVal); };
-        wrap.appendChild(label); wrap.appendChild(input); wrap.appendChild(btn);
-        statusGrid.appendChild(wrap);
-      });
-      updateAutoHp(attributes);
-
-      // skills buttons
-      Object.entries(skills).forEach(([k,v])=>{
-        const btn = document.createElement("button");
-        btn.textContent = `${k} (${v})`;
-        btn.className = "bg-slate-700 hover:bg-slate-600 rounded px-2 py-1 text-sm";
-        btn.onclick = ()=> rollSkill(k, parseInt(v,10) || 0);
-        skillButtons.appendChild(btn);
-      });
-    }
-
-    function updateAutoHp(attributes){
-      const find = (arr)=>{ for(const k of arr) if(attributes[k]!==undefined) return parseInt(attributes[k],10)||0; return 0; };
-      const con = find(["CON","Con","con","ＣＯＮ"]);
-      const siz = find(["SIZ","Siz","siz","ＳＩＺ"]);
-      if(con && siz) hpDisplay.textContent = Math.ceil((con + siz)/10);
-      else hpDisplay.textContent = "--";
-    }
-
-    updateHpBtn.onclick = ()=>{ const v=parseInt(hpInput.value,10); if(!isNaN(v)) hpDisplay.textContent = v; };
-
-    // --- dice utilities + parse ---
-    function rollD(n){ return Math.floor(Math.random()*n)+1; }
-    function parseDice(expr){
-      expr = (expr||"").replace(/\s+/g,'');
-      const parts = expr.match(/([+-]?\d*d\d+|[+-]?\d+)/g);
-      if(!parts) return { total: NaN, rolls: [] };
-      let total = 0; const rolls = [];
-      for(let part of parts){
-        let sign = 1;
-        if(part.startsWith('-')){ sign=-1; part=part.slice(1); }
-        if(part.startsWith('+')) part = part.slice(1);
-        if(part.includes('d')){
-          const [a,b] = part.split('d'); const count = parseInt(a) || 1; const faces = parseInt(b) || 0;
-          const sub = [];
-          for(let i=0;i<count;i++){ const r=rollD(faces); sub.push(r); total += r * sign; }
-          rolls.push((sign<0?'-':'') + `${count}d${faces}=[${sub.join(',')}]`);
-        } else {
-          const n = parseInt(part) || 0; total += sign * n; rolls.push((sign<0?'-':'') + String(n));
-        }
-      }
-      return { total, rolls };
-    }
-
-    // --- kame-style calc: raw-based判定 ---
-    function calcResult(raw, skillVal){
-      const specialExact = Math.ceil(skillVal / 5);
-      const hardExact = Math.ceil(skillVal / 2);
-      if(raw <= 5) return { status:"クリティカル！", cls:"critical" };
-      if((raw >= 96 && skillVal < 100) || raw === 100) return { status:"ファンブル", cls:"fumble" };
-      if(raw === specialExact) return { status:"スペシャル成功", cls:"special" };
-      if(raw === hardExact) return { status:"ハード成功", cls:"hard" };
-      if(raw <= skillVal) return { status:"成功", cls:"success" };
-      return { status:"失敗", cls:"failure" };
-    }
-
-    // --- rolling ---
-    function rollSkill(name, val){
-      const raw = rollD(100);
-      const mod = parseInt(modifierInput.value,10) || 0;
-      const modified = raw + mod;
-      const res = calcResult(raw, val); // kame: raw-based
-      const now = Date.now();
-
-      inlineValue.textContent = raw;
-      inlineText.className = res.cls || "";
-      inlineText.textContent = `${name}(${val}) → 出目:${raw}${mod?((mod>0?'+':'')+mod):''} = ${modified} → ${res.status}`;
-
-      const payload = {
-        player: playerName.value.trim() || "匿名",
-        playerId,
-        char: currentCharName || null,
-        skill: name,
-        val,
-        raw,
-        mod,
-        modified,
-        status: res.status,
-        cls: res.cls,
-        hidden: !!privateCheck.checked,
-        timestamp: now
-      };
-
-      addHistory(payload);
-      if(roomId) db.ref("rooms/"+roomId+"/rolls").push(payload);
-    }
-
-    rollBtn.onclick = ()=>{
-      const expr = exprInput.value.trim() || "1d100";
-      const parsed = parseDice(expr);
-      inlineValue.textContent = parsed.total;
-      inlineText.className = "";
-      inlineText.textContent = `${expr} → ${parsed.rolls.join(', ')} = ${parsed.total}`;
-      const payload = {
-        player: playerName.value.trim() || "匿名",
-        playerId,
-        char: currentCharName || null,
-        expr,
-        rolls: parsed.rolls,
-        total: parsed.total,
-        hidden: !!privateCheck.checked,
-        timestamp: Date.now()
-      };
-      addHistory(payload);
-      if(roomId) db.ref("rooms/"+roomId+"/rolls").push(payload);
-    };
-
-    // --- history display ---
-    function addHistory(d){
-      const div = document.createElement("div");
-      const time = d.timestamp ? new Date(d.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
-      if(d.system){
-        div.innerHTML = `<span class="text-slate-400">[system] ${d.text} <small class="text-slate-500">(${time})</small></span>`;
-      } else {
-        const who = d.player || '匿名';
-        const charTxt = d.char ? `【${d.char}】 ` : '';
-        const secretBadge = d.hidden ? `<small class="text-slate-500">（秘匿）</small>` : '';
-        const sameName = (d.player === playerName.value.trim());
-        // secret visibility: show if not hidden OR isKP OR sameName
-        if(d.hidden && !isKP && !sameName){
-          div.innerHTML = `${who}：${charTxt}${d.skill?d.skill+' → '+(d.status||'') : (d.expr?d.expr : '')} ${secretBadge}<br><small class="text-slate-500">${time}</small>`;
-        } else {
-          let detail='';
-          if(d.raw!==undefined) detail = ` 出目:${d.raw}${d.mod?((d.mod>0?'+':'')+d.mod):''}=${d.modified}`;
-          else if(d.total!==undefined) detail = ` = ${d.total}`;
-          div.innerHTML = `<span class="${d.cls||''}">${who}：${charTxt}${d.skill?d.skill+' → '+(d.status||'') : (d.expr?d.expr : '')} ${secretBadge}（${d.modified!==undefined?d.modified:(d.total!==undefined?d.total:d.raw!==undefined?d.raw:'')}）<br><small class="text-slate-500">${time}${detail}</small></span>`;
-        }
-      }
-      historyDiv.prepend(div);
-    }
-
-    // --- listen firebase room rolls ---
-    function listenRoom(){
-      if(!roomId) return;
-      if(listener) db.ref("rooms/"+roomId+"/rolls").off("child_added", listener);
-      listener = snap => {
-        const d = snap.val();
-        const sameName = d.player && (d.player === playerName.value.trim());
-        if(d.system){ addHistory(d); return; }
-        if(!d.hidden || isKP || sameName) addHistory(d);
-      };
-      db.ref("rooms/"+roomId+"/rolls").on("child_added", listener);
-    }
-
-    // --- memo saving per player (room-scoped if room present) ---
-    function debounce(fn, wait=800){
-      let t=null; return (...a)=>{ if(t) clearTimeout(t); t=setTimeout(()=>{ fn(...a); t=null; }, wait); };
-    }
-    async function loadMemo(){
-      memoText.value = "";
-      const name = playerName.value.trim() || "匿名";
-      if(!roomId){
-        const local = localStorage.getItem(`memo_${name}`);
-        if(local) memoText.value = JSON.parse(local).text || "";
-        return;
-      }
-      try {
-        const snap = await db.ref(`rooms/${roomId}/notes/${name}`).get();
-        if(snap.exists()) memoText.value = snap.val().text || "";
-      } catch(e){ console.error(e); }
-    }
-    const saveMemoNow = async ()=>{
-      const name = playerName.value.trim() || "匿名"; const text = memoText.value;
-      if(!roomId){ localStorage.setItem(`memo_${name}`, JSON.stringify({text,at:Date.now()})); return; }
-      try{ await db.ref(`rooms/${roomId}/notes/${name}`).set({text,updatedAt:Date.now()}); } catch(e){ console.error(e); }
-    };
-    const debouncedSave = debounce(saveMemoNow, 1200);
-    memoText.addEventListener("input", debouncedSave);
-    memoToggle.onclick = ()=>{ memoOverlay.style.display="flex"; memoOverlay.classList.add("show"); setTimeout(()=>memoText.focus(),300); };
-    memoClose.onclick = ()=>{ memoOverlay.classList.remove("show"); setTimeout(()=>memoOverlay.style.display="none",300); };
-    memoBackdrop.onclick = ()=> memoClose();
-
-    // initial
-    showStatus("準備完了。部屋を作成または参加してください。");
+// ================== 履歴送信/受信 ==================
+function pushRoll(d){
+  db.ref("rooms/"+roomId+"/rolls").push(d);
+  addHistory(d);
+}
+function listenRoom(){
+  db.ref("rooms/"+roomId+"/rolls").on("child_added",snap=>{
+    const d=snap.val();
+    if(!d)return;
+    if(!d.hidden||isKP||d.player===playerName.value)addHistory(d);
   });
-  </script>
+}
+function addHistory(d){
+  const div=document.createElement("div");
+  const time=new Date(d.timestamp).toLocaleTimeString();
+  div.innerHTML=`<span class="${d.cls||''}">${d.player}：${d.skill?d.skill+' → ':''}${d.status||''} (${d.raw||''})<br><small>${time}</small></span>`;
+  historyDiv.prepend(div);
+}
+
+showStatus("準備完了。部屋を作成または参加してください。");
+</script>
 </body>
 </html>
